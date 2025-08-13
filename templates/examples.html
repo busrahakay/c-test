@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}C Test Üreticisi - Örnekler{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="text-center mb-5">
+    <h1 class="display-5 fw-bold text-primary mb-3">
+        <i class="fas fa-file-code me-3"></i>
+        Örnek C Dosyaları
+    </h1>
+    <p class="lead text-muted">
+        Bu sayfada sistemin nasıl çalıştığını görmek için örnek C dosyaları bulabilirsiniz.
+        <br>
+        Bu dosyaları kullanarak test üretimini deneyebilirsiniz.
+    </p>
+</div>
+
+<!-- Examples List -->
+<div class="row">
+    {% if examples %}
+        {% for example in examples %}
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-alt me-2"></i>
+                        {{ example.name }}
+                    </h5>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="mb-3">
+                        <span class="badge bg-secondary">
+                            <i class="fas fa-file-code me-1"></i>
+                            {{ example.size }} karakter
+                        </span>
+                    </div>
+                    
+                    <div class="code-block mb-3 flex-grow-1" style="min-height: 200px; max-height: 300px; overflow-y: auto;">
+                        <pre><code class="language-c">{{ example.content[:500] }}{% if example.content|length > 500 %}...{% endif %}</code></pre>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-auto">
+                        <button type="button" class="btn btn-success" onclick="loadExample('{{ example.name }}', `{{ example.content|replace('\n', '\\n')|replace('`', '\\`') }}`)">
+                            <i class="fas fa-play me-2"></i>
+                            Bu Örneği Kullan
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="viewFullCode('{{ example.name }}', `{{ example.content|replace('\n', '\\n')|replace('`', '\\`')|replace('"', '\\"') }}`)">
+                            <i class="fas fa-eye me-2"></i>
+                            Tam Kodu Görüntüle
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                <h5>Henüz örnek dosya bulunmuyor</h5>
+                <p class="mb-0">
+                    <code>examples/</code> klasörüne C dosyaları ekleyerek örnekler oluşturabilirsiniz.
+                </p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Custom Code Popup -->
+<div id="codePopup" class="code-popup" style="display: none;">
+    <div class="code-popup-overlay" id="codePopupOverlay"></div>
+    <div class="code-popup-content">
+        <div class="code-popup-header">
+            <h5 class="code-popup-title">
+                <i class="fas fa-file-code me-2"></i>
+                <span id="popupFileNameText"></span>
+            </h5>
+            <button type="button" class="code-popup-close" id="codePopupClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="code-popup-body">
+            <div class="code-block">
+                <pre><code class="language-c" id="popupCode"></code></pre>
+            </div>
+        </div>
+        <div class="code-popup-footer">
+            <button type="button" class="btn btn-secondary" id="codePopupCloseBtn">
+                <i class="fas fa-times me-2"></i>
+                Kapat
+            </button>
+            <button type="button" class="btn btn-success" id="useInPopupBtn">
+                <i class="fas fa-play me-2"></i>
+                Bu Kodu Kullan
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Instructions -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Nasıl Kullanılır?
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-1 me-2"></i>Örnek Seçin</h6>
+                        <p>Yukarıdaki örneklerden birini seçin ve "Bu Örneği Kullan" butonuna tıklayın.</p>
+                        
+                        <h6><i class="fas fa-2 me-2"></i>Ana Sayfaya Yönlendirilirsiniz</h6>
+                        <p>Seçtiğiniz kod otomatik olarak ana sayfadaki editöre yüklenecektir.</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-3 me-2"></i>Test Üretin</h6>
+                        <p>Test framework'ünü seçin ve "Test Üret" butonuna tıklayın.</p>
+                        
+                        <h6><i class="fas fa-4 me-2"></i>Sonuçları İndirin</h6>
+                        <p>Üretilen testleri indirin veya kopyalayın.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Doxygen Format Info -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Doxygen Formatı Gereklidir
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">
+                    Sistem, C fonksiyonlarınızın Doxygen formatında dokümante edilmiş olmasını gerektirir.
+                </p>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Gerekli Doxygen Etiketleri:</h6>
+                        <ul class="list-unstyled">
+                            <li><code>@brief</code> - Fonksiyon kısa açıklaması</li>
+                            <li><code>@param</code> - Parametre açıklamaları</li>
+                            <li><code>@return</code> - Dönüş değeri açıklaması</li>
+                            <li><code>@pre</code> - Önkoşullar</li>
+                            <li><code>@post</code> - Sonkoşullar</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Örnek Format:</h6>
+                        <div class="code-block">
+                            <pre><code class="language-c">/**
+ * @brief Yaş değeri geçerli mi kontrol eder.
+ * @param age Kontrol edilecek yaş.
+ * @return true Geçerli yaş, false geçersiz yaş.
+ */
+bool is_valid_age(int age) {
+    return (age >= 0 && age <= 130);
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load example into main page
+function loadExample(filename, content) {
+    try {
+        // Store the example data in localStorage
+        localStorage.setItem('selectedExample', JSON.stringify({
+            filename: filename,
+            content: content
+        }));
+        
+        // Redirect to main page
+        window.location.href = '/';
+    } catch (error) {
+        console.error('Örnek yükleme hatası:', error);
+        alert('Örnek yüklenirken hata oluştu: ' + error.message);
+    }
+}
+
+// View full code in popup
+function viewFullCode(filename, content) {
+    try {
+        // Set popup content
+        document.getElementById('popupFileNameText').textContent = filename;
+        document.getElementById('popupCode').textContent = content;
+        
+        // Highlight syntax
+        if (window.Prism) {
+            Prism.highlightElement(document.getElementById('popupCode'));
+        }
+        
+        // Store content for use button
+        document.getElementById('useInPopupBtn').onclick = function() {
+            closeCodePopup();
+            loadExample(filename, content);
+        };
+        
+        // Show popup
+        const popup = document.getElementById('codePopup');
+        popup.style.display = 'flex';
+        
+        // Position popup at user's current scroll position
+        const scrollY = window.scrollY || window.pageYOffset;
+        const viewportHeight = window.innerHeight;
+        const popupContent = popup.querySelector('.code-popup-content');
+        
+        // Calculate position to center popup in current viewport
+        const topPosition = Math.max(20, scrollY + (viewportHeight * 0.1));
+        popupContent.style.marginTop = topPosition + 'px';
+        
+        // Focus on popup
+        popup.focus();
+        
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+        
+    } catch (error) {
+        console.error('Popup açma hatası:', error);
+        alert('Popup açılırken hata oluştu: ' + error.message);
+    }
+}
+
+// Close code popup
+function closeCodePopup() {
+    const popup = document.getElementById('codePopup');
+    popup.style.display = 'none';
+    
+    // Restore body scroll
+    document.body.style.overflow = 'auto';
+    
+    // Clear content
+    document.getElementById('popupCode').textContent = '';
+}
+
+// Check if there's a selected example when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const selectedExample = localStorage.getItem('selectedExample');
+    if (selectedExample) {
+        const example = JSON.parse(selectedExample);
+        
+        // Clear the stored example
+        localStorage.removeItem('selectedExample');
+        
+        // Show notification
+        showAlert(`"${example.filename}" örneği yüklendi!`, 'success');
+    }
+});
+
+// Show alert function
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.main-container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Highlight syntax on page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.Prism) {
+        Prism.highlightAll();
+    }
+    
+    // Popup close event listeners
+    document.getElementById('codePopupClose').addEventListener('click', closeCodePopup);
+    document.getElementById('codePopupCloseBtn').addEventListener('click', closeCodePopup);
+    document.getElementById('codePopupOverlay').addEventListener('click', closeCodePopup);
+    
+    // ESC key to close popup
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const popup = document.getElementById('codePopup');
+            if (popup.style.display === 'flex') {
+                closeCodePopup();
+            }
+        }
+    });
+    
+    // Check if Bootstrap is loaded
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap is not loaded');
+        alert('Bootstrap yüklenemedi. Lütfen sayfayı yenileyin.');
+    }
+});
+</script>
+{% endblock %} 

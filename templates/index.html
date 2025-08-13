@@ -1,0 +1,594 @@
+{% extends "base.html" %}
+
+{% block title %}C Test Üreticisi{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="text-center mb-5">
+    <h1 class="display-4 fw-bold text-primary mb-3">
+        <i class="fas fa-code me-3"></i>
+        C Fonksiyonları için Otomatik Test Üreticisi
+    </h1>
+    <p class="lead text-muted mb-4">
+        Doxygen formatındaki C fonksiyonlarınız için otomatik olarak Black Box test fonksiyonları üretin.
+        <br>
+        <strong>Equivalence Partitioning (EP)</strong> ve <strong>Boundary Value Analysis (BVA)</strong> teknikleri kullanılır.
+    </p>
+    
+    <!-- Process Flow -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="step-icon">📂</div>
+                    <div class="step-label">Kod Yükle</div>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="process-step">
+                    <div class="step-icon">🔍</div>
+                    <div class="step-label">Fonksiyon Analizi</div>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="process-step">
+                    <div class="step-icon">🧪</div>
+                    <div class="step-label">Test Üretimi</div>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="process-step">
+                    <div class="step-icon">✅</div>
+                    <div class="step-label">Sonuç</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="row">
+    <!-- File Upload Section -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-upload me-2"></i>
+                    C Dosyası Yükle
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                        <h5>Dosyanızı buraya sürükleyin veya tıklayın</h5>
+                        <p class="text-muted">Sadece .c ve .h dosyaları kabul edilir</p>
+                        <input type="file" id="fileInput" name="file" accept=".c,.h" style="display: none;">
+                        <button type="button" class="btn btn-outline-primary" id="selectFileBtn">
+                            <i class="fas fa-folder-open me-2"></i>
+                            Dosya Seç
+                        </button>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label for="framework" class="form-label">Test Framework:</label>
+                        <select class="form-select" id="framework" name="framework">
+                            <option value="custom">Unity</option>
+                            <option value="unity">Custom Framework</option>
+                            <option value="cmocka">CMocka</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label class="form-label">Test Türleri:</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="includeEP" name="include_ep" checked>
+                            <label class="form-check-label" for="includeEP">
+                                Equivalence Partitioning (EP)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="includeBVA" name="include_bva" checked>
+                            <label class="form-check-label" for="includeBVA">
+                                Boundary Value Analysis (BVA)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary w-100" id="analyzeBtn">
+                            <i class="fas fa-search me-2"></i>
+                            Dosyayı Analiz Et
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Loading Spinner -->
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Yükleniyor...</span>
+                    </div>
+                    <p class="mt-2">Dosya analiz ediliyor...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Code Editor Section -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-edit me-2"></i>
+                    Kod Editörü
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="codeEditor" class="form-label">C Kodu:</label>
+                    <textarea class="form-control" id="codeEditor" rows="15" placeholder="C kodunuzu buraya yazın veya dosya yükleyin..."></textarea>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-success" id="generateBtn" disabled>
+                        <i class="fas fa-magic me-2"></i>
+                        Test Üret
+                    </button>
+                    <button type="button" class="btn btn-warning" id="clearBtn">
+                        <i class="fas fa-trash me-2"></i>
+                        Temizle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Section -->
+<div class="row" id="resultsSection" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Analiz Sonuçları
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="analysisResults"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generated Tests Section -->
+<div class="row" id="testsSection" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-code me-2"></i>
+                    Üretilen Testler
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <button type="button" class="btn btn-primary" id="downloadBtn">
+                        <i class="fas fa-download me-2"></i>
+                        Testleri İndir
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="copyBtn">
+                        <i class="fas fa-copy me-2"></i>
+                        Kodu Kopyala
+                    </button>
+                </div>
+                
+                <div class="code-block">
+                    <pre><code class="language-c" id="generatedCode"></code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h3 class="text-center mb-4">Özellikler</h3>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h5 class="card-title">LLM Analizi</h5>
+                <p class="card-text">
+                    OpenAI GPT modelleri kullanarak fonksiyon analizi yapar ve parametre aralıklarını çıkarır.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="fas fa-sitemap"></i>
+                </div>
+                <h5 class="card-title">EP Tekniği</h5>
+                <p class="card-text">
+                    Equivalence Partitioning ile geçerli ve geçersiz değer sınıflarını belirler.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <div class="feature-icon">
+                    <i class="fas fa-border-all"></i>
+                </div>
+                <h5 class="card-title">BVA Tekniği</h5>
+                <p class="card-text">
+                    Boundary Value Analysis ile sınır değerlerini ve yakın değerleri test eder.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global variables
+let currentAnalysis = null;
+let generatedTests = null;
+
+// File upload handling
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('fileInput');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const selectFileBtn = document.getElementById('selectFileBtn');
+    const codeEditor = document.getElementById('codeEditor');
+    const uploadForm = document.getElementById('uploadForm');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const generateBtn = document.getElementById('generateBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    
+    // File input change
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            loadFileContent(file);
+        }
+    });
+    
+    // Drag and drop
+    fileUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    });
+    
+    fileUploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+    });
+    
+    fileUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.name.endsWith('.c') || file.name.endsWith('.h')) {
+                // fileInput.files = files; satırını kaldırdık - change event'ini tetikliyordu
+                loadFileContent(file);
+            } else {
+                showAlert('Sadece .c ve .h dosyaları kabul edilir.', 'warning');
+            }
+        }
+    });
+    
+    // Click to upload - sadece dosya seçiciyi aç
+    fileUploadArea.addEventListener('click', function(e) {
+        // Eğer tıklanan element dosya seç butonu değilse
+        if (e.target.tagName !== 'BUTTON') {
+            fileInput.click();
+        }
+    });
+    
+    // Dosya seç butonu
+    selectFileBtn.addEventListener('click', function(e) {
+        e.stopPropagation(); // Event bubbling'i engelle
+        fileInput.click();
+    });
+    
+    // Form submission - sadece manuel analiz için
+    uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Sadece kod editörde içerik varsa analiz yap
+        if (codeEditor.value.trim()) {
+            analyzeFile();
+        } else {
+            showAlert('Lütfen önce kod girin veya dosya yükleyin.', 'warning');
+        }
+    });
+    
+    // Dosya içeriğini yükleme fonksiyonu
+    function loadFileContent(file) {
+        // Eğer zaten yükleme yapılıyorsa, tekrar yapma
+        if (loadingSpinner.style.display === 'block') {
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            codeEditor.value = e.target.result;
+            generateBtn.disabled = false;
+            // Dosya yüklendiğinde otomatik analiz yap
+            analyzeFile();
+        };
+        reader.readAsText(file);
+    }
+    
+    // Generate tests button
+    generateBtn.addEventListener('click', function() {
+        generateTests();
+    });
+    
+    // Clear button
+    clearBtn.addEventListener('click', function() {
+        codeEditor.value = '';
+        fileInput.value = '';
+        generateBtn.disabled = true;
+        hideResults();
+    });
+    
+    // Code editor change
+codeEditor.addEventListener('input', function() {
+    generateBtn.disabled = codeEditor.value.trim() === '';
+});
+
+// Check if there's a selected example when page loads
+const selectedExample = localStorage.getItem('selectedExample');
+if (selectedExample) {
+    const example = JSON.parse(selectedExample);
+    codeEditor.value = example.content;
+    generateBtn.disabled = false;
+    
+    // Clear the stored example
+    localStorage.removeItem('selectedExample');
+    
+    // Show notification
+    showAlert(`"${example.filename}" örneği yüklendi!`, 'success');
+}
+});
+
+// Analyze file function
+function analyzeFile() {
+    const fileInput = document.getElementById('fileInput');
+    const codeEditor = document.getElementById('codeEditor');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    
+    let content = '';
+    let filename = '';
+    
+    // Her zaman kod editördeki içeriği kullan
+    content = codeEditor.value.trim();
+    
+    if (!content) {
+        showAlert('Lütfen önce kod girin veya dosya yükleyin.', 'warning');
+        return;
+    }
+    
+    showLoading(true);
+    
+    // JSON olarak gönder
+    fetch('/analyze', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            content: content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showLoading(false);
+        if (data.success) {
+            currentAnalysis = data;
+            showAnalysisResults(data);
+            updateStats(data.total_functions, 0, 100);
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showLoading(false);
+        showAlert('Analiz sırasında hata oluştu: ' + error.message, 'danger');
+    });
+}
+
+// Generate tests function
+function generateTests() {
+    const codeEditor = document.getElementById('codeEditor');
+    const framework = document.getElementById('framework').value;
+    const includeEP = document.getElementById('includeEP').checked;
+    const includeBVA = document.getElementById('includeBVA').checked;
+    
+    const content = codeEditor.value.trim();
+    
+    if (!content) {
+        showAlert('Lütfen önce kod girin.', 'warning');
+        return;
+    }
+    
+    showLoading(true);
+    
+    fetch('/generate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            content: content,
+            framework: framework,
+            include_ep: includeEP,
+            include_bva: includeBVA
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showLoading(false);
+        if (data.success) {
+            generatedTests = data;
+            showGeneratedTests(data);
+            updateStats(1, 1, 100);
+        } else {
+            showAlert(data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showLoading(false);
+        showAlert('Test üretimi sırasında hata oluştu: ' + error.message, 'danger');
+    });
+}
+
+// Show analysis results
+function showAnalysisResults(data) {
+    const resultsSection = document.getElementById('resultsSection');
+    const analysisResults = document.getElementById('analysisResults');
+    
+    let html = '<div class="row">';
+    
+    data.functions.forEach((func, index) => {
+        html += `
+            <div class="col-md-6 mb-3">
+                <div class="function-card">
+                    <h6 class="mb-2">${func.name}</h6>
+                    <p class="mb-2"><strong>İmza:</strong> ${func.signature}</p>
+                    <p class="mb-2"><strong>Açıklama:</strong> ${func.description || 'Açıklama yok'}</p>
+                    <p class="mb-0"><strong>Dönüş Tipi:</strong> ${func.return_type}</p>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    
+    analysisResults.innerHTML = html;
+    resultsSection.style.display = 'block';
+}
+
+// Show generated tests
+function showGeneratedTests(data) {
+    const testsSection = document.getElementById('testsSection');
+    const generatedCode = document.getElementById('generatedCode');
+    
+    generatedCode.textContent = data.test_code;
+    testsSection.style.display = 'block';
+    
+    // Highlight syntax
+    if (window.Prism) {
+        Prism.highlightElement(generatedCode);
+    }
+    
+    // Scroll to tests section
+    testsSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Download tests
+document.getElementById('downloadBtn').addEventListener('click', function() {
+    if (!generatedTests) {
+        showAlert('İndirilecek test bulunamadı.', 'warning');
+        return;
+    }
+    
+    fetch('/download', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            test_code: generatedTests.test_code,
+            filename: 'generated_tests.c'
+        })
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'generated_tests.zip';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    })
+    .catch(error => {
+        showAlert('İndirme sırasında hata oluştu: ' + error.message, 'danger');
+    });
+});
+
+// Copy code
+document.getElementById('copyBtn').addEventListener('click', function() {
+    const generatedCode = document.getElementById('generatedCode');
+    
+    navigator.clipboard.writeText(generatedCode.textContent).then(function() {
+        showAlert('Kod panoya kopyalandı!', 'success');
+    }).catch(function() {
+        showAlert('Kopyalama başarısız oldu.', 'danger');
+    });
+});
+
+// Utility functions
+function showLoading(show) {
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    
+    if (show) {
+        loadingSpinner.style.display = 'block';
+        analyzeBtn.disabled = true;
+    } else {
+        loadingSpinner.style.display = 'none';
+        analyzeBtn.disabled = false;
+    }
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.main-container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+function hideResults() {
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('testsSection').style.display = 'none';
+    currentAnalysis = null;
+    generatedTests = null;
+}
+
+function updateStats(functions, tests, rate) {
+    document.getElementById('totalFunctions').textContent = functions;
+    document.getElementById('generatedTests').textContent = tests;
+    document.getElementById('successRate').textContent = rate + '%';
+}
+</script>
+{% endblock %} 
